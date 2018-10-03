@@ -1,0 +1,78 @@
+Set-StrictMode -Version Latest
+Import-Module WebAdministration
+create-Newwebsite
+Create-IISAppPool
+
+function create-Newwebsite
+{
+$configfile = "C:\Users\deeksha.p\Documents\Nexus\Nexus\DEV7.xml"
+[xml]$file = [xml](get-content -Path $configFile)
+$AppPoolName = $file.SelectNodes("/env/AppPools/AppPool/@apppool")[0].Value
+echo "$AppPoolName"
+$port=$file.SelectSingleNode("/env/IpAddresses/IpAddress/@useport").Value
+echo "$Port"
+$Address = $file.SelectNodes("/env/IpAddresses/IpAddress/@name")[0].Value 
+ echo "$Address"
+$Websitename=$file.SelectSingleNode("/env/Websitename/website/@name").Value
+echo "$Websitename"
+
+$pysicalpath = "C:\test"
+    
+    if(Test-Path "IIS:\Sites\$WebsiteName" -pathType Any)
+    {
+     write-host "website already exists"
+    }
+    else 
+    {
+      Write-Output "Creating Website '$WebsiteName'"
+
+        # Create the website
+        New-Website -Name $WebsiteName -Port $port -PhysicalPath $pysicalpath -force -ApplicationPool $Apppoolname
+    }
+
+    $bindings = @( @{ protocol="http"; bindingInformation="$address`:$port"} )
+    echo $bindings
+       
+    # Set the binding with the specified IP Address and port
+    Set-WebConfigurationProperty "/system.applicationHost/sites/site[@name='$WebsiteName']" -PSPath IIS:\ -Name Bindings -Value $bindings
+
+
+}
+
+function Create-IISAppPool
+{
+
+$configfile = "C:\Users\deeksha.p\Documents\Nexus\Nexus\DEV7.xml"
+[xml]$file = [xml](get-content -Path $configFile)
+$AppPoolName = $file.SelectNodes("/env/AppPools/AppPool/@apppool")[0].Value
+echo "$AppPoolName"
+
+  $appPoolDotNetVersion = "v4.0"
+
+    # Check that IIS is installed on this machine
+    if(!(Get-Service W3SVC -ErrorAction SilentlyContinue))
+    {
+        throw "IIS is not installed on this machine"
+    }
+
+    # Create the app pool if it doesn't already exists
+    if (Test-Path "IIS:\AppPools\$Apppoolname" -pathType container)
+    {
+        Write-Output "App Pool '$Apppoolname' already exists"
+    } 
+    else
+    {
+        Write-Output "Creating App Pool '$Apppoolname'"
+
+        # Create the app pool (managed pipeline mode: Integrated)
+        $Apppoolname = New-WebAppPool -Name $Apppoolname
+        $Apppoolname| Set-ItemProperty -Name "managedRuntimeVersion" -Value $appPoolDotNetVersion 
+           
+    }   
+
+    
+}
+
+
+
+
