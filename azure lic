@@ -1,0 +1,29 @@
+Param
+(   
+    [Parameter(Mandatory=$true)][String]$AzureSubscriptionName,
+    [Parameter(Mandatory=$true)][String]$AzureResourceGroup,
+    [Parameter(Mandatory=$false)][ValidateSet("VM","VMSS","VM,VMSS")][String]$Resource="VMSS",
+	[Parameter(Mandatory=$false)][ValidateSet("Windows_Server","None")][String]$LicenseType="Windows_Server",
+    [Parameter(Mandatory=$false)][String]$VMSSName="",
+	[Parameter(Mandatory=$false)][String]$VMName=""
+)
+
+
+Function Update-VMLicense
+{
+    Param(
+        [Parameter(Mandatory=$true)][String]$AzureSubscriptionName,
+		[Parameter(Mandatory=$true)][String]$AzureResourceGroup,
+		[Parameter(Mandatory=$false)][String]$VMName,
+		[Parameter(Mandatory=$true)][String]$LicenseType
+    )
+
+    foreach ($AzureResourceGroup in $AzureSubscriptionName) {    
+    $VMName.LicenseType = $LicenseType
+    Write-Output ""
+	Write-Output " Updating VM : ['$($VMName)'] with License : ['$($LicenseType)'] Started"
+	Update-AzureRmVm -ResourceGroupName $AzureResourceGroup -VM $vm -Verbose:$false
+	Write-Output " Updating VMSS : ['$($VMName)'] with License : ['$($LicenseType)'] Completed"
+}
+
+    }
